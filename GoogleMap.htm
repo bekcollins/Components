@@ -1,0 +1,292 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <style type="text/css">
+        html
+        {
+            height: 100%;
+        }
+        body
+        {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        #map_canvas
+        {
+            height: 100%;
+        }
+    </style>
+
+  <script type="text/javascript"
+       src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCJZJrpKt1UwCifoZNcxQc6tqVmnlgEnGQ&sensor=false&libraries=drawing">
+  </script>
+    <script type="text/javascript">
+
+      var rect;
+      var rectangle2;
+
+      var dog = "nothing yet";
+      var hog = "nothing yet";
+
+
+      var geocoder;
+      var map;
+      var markers = [];
+      var Rectangles = [];
+
+      function Initialize(zoomLevel,lat,lng,type){
+
+      geocoder = new google.maps.Geocoder();
+
+      var MapType;
+      switch (type)
+      {
+      case 1:
+      MapType = google.maps.MapTypeId.ROADMAP;
+      break;
+      case 2:
+      MapType = google.maps.MapTypeId.TERRAIN;
+      break;
+      case 3:
+      MapType = google.maps.MapTypeId.HYBRID;
+      break;
+      case 4:
+      MapType = google.maps.MapTypeId.SATELLITE;
+      break;
+      default:
+      MapType = google.maps.MapTypeId.ROADMAP;
+      };
+
+
+      var myLatlng = new google.maps.LatLng(lat,lng);
+      var myOptions = {zoom: zoomLevel,center: myLatlng,mapTypeId: MapType};
+      var MarkerSize = new google.maps.Size(48,48);
+
+      map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+
+      map.setTilt(0);
+
+      var drawingManager = new google.maps.drawing.DrawingManager({
+
+      drawingControl: true,
+      drawingControlOptions: {
+      position: google.maps.ControlPosition.TOP_CENTER,
+      drawingModes: [
+
+      google.maps.drawing.OverlayType.RECTANGLE
+      ]
+      },
+
+      rectangleOptions: {
+      fillColor: '#ffff00',
+      fillOpacity: .2,
+      draggable: true,
+      strokeWeight: .5,
+      clickable: true,
+      editable: true,
+      zIndex: 1
+      }
+      });
+
+      drawingManager.setMap(map);
+
+
+      google.maps.event.addListener(map, 'click', Map_Click);
+      google.maps.event.addListener(map, 'mousemove', Map_MouseMove);
+      google.maps.event.addListener(map, 'idle',Map_Idle);
+
+
+
+      google.maps.event.addListener(drawingManager, 'rectanglecomplete', function(subject){
+
+      if (rect) {
+      google.maps.event.clearInstanceListeners(rect);
+      rect.setMap(null);
+      }
+
+      if (rectangle2) {
+      google.maps.event.clearInstanceListeners(rectangle2);
+      rectangle2.setMap(null);
+      }
+
+      google.maps.event.addListener(subject, "bounds_changed", scheduleDelayedCallback);
+
+
+      google.maps.event.addDomListener(window, 'load', Initialize);
+
+      rect = subject;
+
+      hog = rect.getBounds().getSouthWest().toUrlValue().toString();
+      dog = rect.getBounds().getNorthEast().toUrlValue().toString();
+
+      window.external.Rect_Call(hog,dog);
+
+      });
+
+      }
+
+      function fireIfLastEvent()
+      {
+      if (lastEvent.getTime() + 200 <= new Date().getTime())
+        {
+
+        hog = rect.getBounds().getSouthWest().toUrlValue().toString();
+        dog = rect.getBounds().getNorthEast().toUrlValue().toString();
+
+        window.external.Rect_Call(hog,dog);
+        }
+        }
+
+        function scheduleDelayedCallback()
+        {
+        lastEvent = new Date();
+        setTimeout(fireIfLastEvent, 200);
+        }
+
+
+        function adjustRect(S,W,N,E)
+        {
+
+        if (rect) {
+        google.maps.event.clearInstanceListeners(rect);
+        rect.setMap(null);
+        }
+
+        if (rectangle2) {
+        google.maps.event.clearInstanceListeners(rectangle2);
+        rectangle2.setMap(null);
+        }
+
+        var RecLatLngSW1 = new google.maps.LatLng(S,W);
+        var RecLatLngNE1 = new google.maps.LatLng(N,E);
+
+        var RectangleOption2 = ({
+        fillColor: '#ffff00',
+        fillOpacity: .2,
+        draggable: false,
+        strokeWeight: .5,
+        clickable: false,
+        editable: false,
+        map: map,
+        bounds: new google.maps.LatLngBounds(RecLatLngSW1,RecLatLngNE1)
+        });
+
+
+        rectangle2 = new google.maps.Rectangle(RectangleOption2);
+
+
+        hog = rectangle2.getBounds().getSouthWest().toUrlValue().toString();
+        dog = rectangle2.getBounds().getNorthEast().toUrlValue().toString();
+
+
+        window.external.Rect_Call(hog,dog);
+        var bounds2 = new google.maps.LatLngBounds(RecLatLngSW1,RecLatLngNE1);
+        map.fitBounds(bounds2);
+
+        }
+
+
+        function Map_Click(e){
+        window.external.Map_Click(e.latLng.lat(),e.latLng.lng());
+        }
+
+        function Map_MouseMove(e){
+        window.external.Map_MouseMove(e.latLng.lat(),e.latLng.lng());
+        }
+
+        function Map_Idle(){
+        window.external.Map_Idle();
+        }
+
+        function DeleteMarkers()
+        {
+        if (markers){
+        for (i in markers){
+        markers[i].setMap(null);
+        google.maps.event.clearInstanceListeners(markers[i]);
+        markers[i] = null;
+        }
+        markers.length = 0;
+        }
+        }
+
+        function DeleteRects()
+        {
+        if (Rectangles){
+        for (i in Rectangles){
+        Rectangles[i].setMap(null);
+        google.maps.event.clearInstanceListeners(Rectangles[i]);
+        Rectangles[i] = null;
+        }
+        Rectangles.length = 0;
+        }
+        }
+
+        function AddRectangle(latSW,lngSW,latNE,lngNE,color,zoomBool)
+        {
+        var RecLatLngSW = new google.maps.LatLng(latSW, lngSW);
+        var RecLatLngNE = new google.maps.LatLng(latNE, lngNE);
+
+        if (zoomBool == "True")
+        {
+        var bounds1 = new google.maps.LatLngBounds(RecLatLngSW,RecLatLngNE);
+        map.fitBounds(bounds1);
+        }
+
+        var RectangleOption = ({
+        strokeColor: color,
+        strokeOpacity: 0.8,
+        strokeWeight: 2,
+        fillColor: 'rgb(0,0,0)',
+        fillOpacity: 0.0,
+        map: map,
+        bounds: new google.maps.LatLngBounds(
+        RecLatLngSW,
+        RecLatLngNE)
+        });
+
+
+        var rectangle = new google.maps.Rectangle(RectangleOption);
+        Rectangles.push(rectangle);
+        RecLatLngSW = null;
+        RecLatLngNE = null;
+        RectangleOption = null;
+        }
+
+
+        function codeAddress(formAddress) {
+        //var address = document.getElementById('address').value;
+        var address = formAddress;
+        geocoder.geocode( { 'address': address}, function(results, status) {
+        if (status == google.maps.GeocoderStatus.OK) {
+        map.setZoom(16);
+        map.setCenter(results[0].geometry.location);
+
+        var marker = new google.maps.Marker({
+        map: map,
+        position: results[0].geometry.location,
+        title: address
+        });
+        markers.push(marker);
+
+
+        } else {
+        alert('Geocode was not successful for the following reason: ' + status);
+        }
+        });
+        }
+
+      </script>
+    
+</head>
+<body>
+    
+  <div id="map_canvas" style="width: 100%; height: 100%">
+</body>
+</html>
+
+
+

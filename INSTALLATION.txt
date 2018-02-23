@@ -1,0 +1,7 @@
+1. Move or copy the folder 'TT Toolbox' to your local grasshopper components folder: C:\Users\[USERNAME]\AppData\Roaming\Grasshopper\Libraries
+	-Type "GrasshopperFolders" in Rhino command line
+	-Select "Component"
+2. Start Rhino and Grasshopper and look for the TT Toolbox tab in the Grasshopper Ribbon.
+3. Enjoy!
+
+
